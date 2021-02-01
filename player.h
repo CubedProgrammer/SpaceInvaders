@@ -1,14 +1,13 @@
 #ifndef PLAYER_H_
 #define PLAYER_H_
 #define COOLDOWN 60;
-#define NULL ((void *)0)
 enum BulletTeam
 {PLAYER = 997, ENEMY};
 struct PlayerShip
 {
 	int x, y;
-	int maxhp, hp;
 	int scd;
+	int vx;
 };
 struct ShipBullet
 {
@@ -16,6 +15,6 @@ struct ShipBullet
 	int vx, vy;
 	enum BulletTeam team;
 };
-struct ShipBullet *PlayerShoot(const struct PlayerShip *player);
-void PlayerTick(void);
+struct ShipBullet *PlayerShoot(struct PlayerShip *player);
+void PlayerTick(struct PlayerShip *player);
 #endif /* PLAYER_H_ */

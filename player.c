@@ -1,5 +1,6 @@
+#include<stdlib.h>
 #include"player.h"
-struct ShipBullet *PlayerShoot(const struct PlayerShip *player)
+struct ShipBullet *PlayerShoot(struct PlayerShip *player)
 {
 	if(player->scd == 0)
 	{
@@ -13,4 +14,10 @@ struct ShipBullet *PlayerShoot(const struct PlayerShip *player)
 	}
 	else
 		return NULL;
+}
+void PlayerTick(struct PlayerShip *player)
+{
+	player->x += player->vx;
+	if(player->scd)
+		--player->scd;
 }
