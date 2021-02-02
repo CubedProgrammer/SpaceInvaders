@@ -1,9 +1,10 @@
 #include<pthread.h>
 #include<stdbool.h>
 #include<stdio.h>
+#include<time.h>
 #include<unistd.h>
 #include<X11/Xlib.h>
-#include"bullets.h"
+#include"enemy.h"
 #define WIDTH 1024
 #define HEIGHT 576
 #define NAME "Space Invaders"
@@ -34,6 +35,16 @@ int main(int argl, char *argv[])
 	player.y = HEIGHT * 2 / 3;
 	player.vx = 0;
 	player.scd = COOLDOWN;
+	struct EnemyShip enemies[48];
+	long dice = time(NULL);
+	for(int i = 0; i < 48; ++i)
+	{
+		enemies[i].hp = MAX_ENEMY_HP;
+		enemies[i].mscd = dice % 120;
+		enemies[i].scd = enemies[i].mscd;
+		enemies[i].x = WIDTH / 2 - 11 * WIDTH / 48 + WIDTH * (i % 12) / 24;
+		enemies[i].y = HEIGHT / 24 + HEIGHT * (i / 12) / 12;
+	}
 	pthread_t th;
 	pthread_create(&th, NULL, &keyhandler, &player);
 	running = 1;
@@ -41,10 +52,15 @@ int main(int argl, char *argv[])
 	{
 		XSetForeground(d, gc, 0);
 		XFillRectangle(d, win, gc, 0, 0, WIDTH, HEIGHT);
+		for(int i = 0; i < 48; ++i)
+		{
+			XSetForeground(d, gc, EnemyColour(enemies[i].hp));
+			XFillRectangle(d, win, gc, enemies[i].x - 16, enemies[i].y - 16, 32, 32);
+		}
 		tmp = bullets;
 		while(tmp != NULL)
 		{
-			XSetForeground(d, gc, 0xffffff);
+			XSetForeground(d, gc, 0x6f6f6f);
 			XFillRectangle(d, win, gc, tmp->bullet->x - 3, tmp->bullet->y - 3, 6, 6);
 			tmp->bullet->x += tmp->bullet->vx;
 			tmp->bullet->y += tmp->bullet->vy;
@@ -58,16 +74,36 @@ int main(int argl, char *argv[])
 						if(collidesWithBullet(tmp->bullet, other->bullet))
 						{
 							tmpb = tmp->prev;
+							if(tmp == bullets)
+								bullets = bullets->next;
+							else if(tmp == bend)
+								bend = bend->prev;
 							RemoveBullet(tmp);
+							if(other == bullets)
+								bullets = bullets->next;
+							else if(other == bend)
+								bend = bend->prev;
 							RemoveBullet(other);
 							other = bend;
 							tmp = tmpb;
 						}
 					}
 				}
-				other = other->next;
+				if(other)
+					other = other->next;
 			}
-			tmp = tmp->next;
+			if(tmp->bullet->x < 0 || tmp->bullet->x > WIDTH || tmp->bullet->y < 0 || tmp->bullet->y > HEIGHT)
+			{
+				tmpb = tmp->prev;
+				if(tmp == bullets)
+					bullets = bullets->next;
+				else if(tmp == bend)
+					bend = bend->prev;
+				RemoveBullet(tmp);
+				tmp = tmpb;
+			}
+			if(tmp)
+				tmp = tmp->next;
 		}
 		PlayerTick(&player);
 		XSetForeground(d, gc, 0xffffff);
