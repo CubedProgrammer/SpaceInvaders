@@ -45,9 +45,12 @@ int main(int argl, char *argv[])
 		enemies[i].x = WIDTH / 2 - 11 * WIDTH / 48 + WIDTH * (i % 12) / 24;
 		enemies[i].y = HEIGHT / 24 + HEIGHT * (i / 12) / 12;
 	}
+	struct ShipBullet *tmpbullet;
 	pthread_t th;
 	pthread_create(&th, NULL, &keyhandler, &player);
 	running = 1;
+	int enemy_change_direction = 0;
+	int dire = 1;
 	while(running)
 	{
 		XSetForeground(d, gc, 0);
@@ -56,6 +59,32 @@ int main(int argl, char *argv[])
 		{
 			XSetForeground(d, gc, EnemyColour(enemies[i].hp));
 			XFillRectangle(d, win, gc, enemies[i].x - 16, enemies[i].y - 16, 32, 32);
+			if(enemies[i].hp)
+			{
+				EnemyTick(enemies + i);
+				enemies[i].x += dire;
+				if(enemies[i].x == 0 || enemies[i].x == WIDTH - 1)
+					enemy_change_direction = 1;
+				tmpbullet = EnemyShoot(enemies + i, player.x, player.y);
+				if(tmpbullet)
+				{
+					puts("gay");
+					if(bullets == NULL)
+						bend = bullets = InitCollection(tmpbullet);
+					else
+					{
+						AddAfter(bend, tmpbullet);
+						bend = bend->next;
+					}
+				}
+			}
+		}
+		if(enemy_change_direction)
+		{
+			dire = -dire;
+			for(int i = 0; i < 48; ++i)
+				++enemies[i].y;
+			enemy_change_direction = 0;
 		}
 		tmp = bullets;
 		while(tmp != NULL)
